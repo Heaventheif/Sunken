@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Shadow Garden — لوحة التحكم</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        brand: { 50:'#f0fdf4',100:'#dcfce7',500:'#22c55e',600:'#16a34a',700:'#15803d',900:'#14532d' },
+        dark:  { 800:'#1e293b',850:'#172033',900:'#0f172a',950:'#080d1a' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  body { background: #0f172a; color: #e2e8f0; }
+  .nav-btn { transition: all .2s; }
+  .nav-btn.active { background: rgba(34,197,94,.15); color: #4ade80; border-right: 3px solid #22c55e; }
+  .nav-btn:hover:not(.active) { background: rgba(255,255,255,.05); }
+  .card { background: #1e293b; border: 1px solid rgba(255,255,255,.07); border-radius: 12px; }
+  .btn-primary { background: #22c55e; color: #000; font-weight: 600; border-radius: 8px; padding: 8px 20px; transition: all .2s; }
+  .btn-primary:hover { background: #16a34a; transform: translateY(-1px); }
+  .btn-danger  { background: #ef4444; color: #fff; font-weight: 600; border-radius: 8px; padding: 8px 20px; transition: all .2s; }
+  .btn-danger:hover  { background: #dc2626; }
+  .btn-ghost  { background: rgba(255,255,255,.08); color: #cbd5e1; border-radius: 8px; padding: 8px 20px; transition: all .2s; }
+  .btn-ghost:hover  { background: rgba(255,255,255,.15); }
+  .inp { background: #0f172a; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: 10px 14px; color: #e2e8f0; width: 100%; outline: none; transition: border .2s; }
+  .inp:focus { border-color: #22c55e; }
+  .textarea { resize: vertical; min-height: 120px; }
+  .toggle { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { width: 44px; height: 24px; background: #334155; border-radius: 12px; transition: .2s; position: relative; }
+  .toggle input:checked + .toggle-track { background: #22c55e; }
+  .toggle-thumb { position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: .2s; }
+  .toggle input:checked ~ .toggle-thumb { right: calc(100% - 21px); }
+  .badge { border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(34,197,94,.15); color: #4ade80; }
+  .badge-red   { background: rgba(239,68,68,.15);  color: #f87171; }
+  .badge-gray  { background: rgba(148,163,184,.12); color: #94a3b8; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 24px; border-radius: 10px; font-weight: 600; z-index: 9999; display: none; animation: fadeUp .3s ease; }
+  .toast.show { display: block; }
+  .toast.success { background: #22c55e; color: #000; }
+  .toast.error   { background: #ef4444; color: #fff; }
+  @keyframes fadeUp { from { opacity:0; transform: translateX(-50%) translateY(12px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .stat-card { background: linear-gradient(135deg, #1e293b 0%, #172033 100%); border: 1px solid rgba(255,255,255,.07); border-radius: 12px; padding: 20px; }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Layout -->
+<div class="flex min-h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 flex-shrink-0 border-l border-white/5" style="background:#080d1a">
+    <!-- Logo -->
+    <div class="p-6 border-b border-white/5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:rgba(34,197,94,.2)">🌿</div>
+        <div>
+          <div class="font-bold text-white text-sm" id="sidebar-botname">Shadow Garden</div>
+          <div class="text-xs text-slate-400">لوحة التحكم</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="p-3 space-y-1">
+      <button class="nav-btn active w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('overview')">
+        <span class="ml-2">📊</span> نظرة عامة
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('sessions')">
+        <span class="ml-2">🔑</span> الجلسات
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('groups')">
+        <span class="ml-2">👥</span> المجموعات
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('broadcast')">
+        <span class="ml-2">📢</span> إشعار المطور
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('commands')">
+        <span class="ml-2">⚙️</span> الأوامر
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('render')">
+        <span class="ml-2">☁️</span> Render
+      </button>
+      <button class="nav-btn w-full text-right px-4 py-3 rounded-lg text-sm font-medium text-slate-300" onclick="showTab('config')">
+        <span class="ml-2">🛠️</span> الإعدادات
+      </button>
+    </nav>
+
+    <!-- Status indicator -->
+    <div class="p-4 mt-auto border-t border-white/5">
+      <div class="flex items-center gap-2 text-xs text-slate-500">
+        <span class="w-2 h-2 rounded-full bg-green-400 pulse"></span>
+        <span>البوت يعمل</span>
+        <span id="uptime-badge" class="mr-auto text-slate-600"></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-auto p-6">
+
+    <!-- Overview Tab -->
+    <div id="tab-overview" class="tab-content active">
+      <h1 class="text-2xl font-bold text-white mb-6">نظرة عامة</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="text-slate-400 text-xs mb-1">البوت الأول</div>
+          <div class="text-2xl font-bold" id="stat-bot1">...</div>
+          <div class="text-xs text-slate-500 mt-1">جلسة فيسبوك</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-slate-400 text-xs mb-1">البوت الثاني</div>
+          <div class="text-2xl font-bold" id="stat-bot2">...</div>
+          <div class="text-xs text-slate-500 mt-1">جلسة فيسبوك</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-slate-400 text-xs mb-1">المجموعات</div>
+          <div class="text-2xl font-bold text-white" id="stat-groups">...</div>
+          <div class="text-xs text-slate-500 mt-1">إجمالي المجموعات</div>
+        </div>
+        <div class="stat-card">
+          <div class="text-slate-400 text-xs mb-1">الأوامر</div>
+          <div class="text-2xl font-bold text-white" id="stat-cmds">...</div>
+          <div class="text-xs text-slate-500 mt-1">مفعّل / الإجمالي</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="card p-5">
+          <h3 class="font-semibold text-white mb-4">معلومات البوت</h3>
+          <div class="space-y-3 text-sm">
+            <div class="flex justify-between"><span class="text-slate-400">الاسم</span><span id="ov-botname" class="text-white font-medium">...</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">البادئة</span><span id="ov-prefix" class="font-mono text-green-400">...</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">وقت التشغيل</span><span id="ov-uptime" class="text-white">...</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">المجموعات المعطلة</span><span id="ov-disabled" class="text-red-400">...</span></div>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold text-white mb-4">الأدوار</h3>
+          <div class="space-y-3 text-sm" id="ov-roles">
+            <div class="text-slate-500">جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sessions Tab -->
+    <div id="tab-sessions" class="tab-content">
+      <h1 class="text-2xl font-bold text-white mb-6">إدارة الجلسات</h1>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Bot 1 -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-white text-lg">🤖 البوت الأول</h3>
+            <span id="bot1-badge" class="badge badge-gray">غير مفعّل</span>
+          </div>
+          <div id="bot1-info" class="text-sm text-slate-400 mb-4"></div>
+          <textarea id="bot1-appstate" class="inp textarea mb-3" placeholder='ألصق كود AppState هنا (JSON) ...'></textarea>
+          <input id="bot1-note" class="inp mb-3" placeholder="ملاحظة (اختياري) — مثلاً: الحساب الرئيسي"/>
+          <div class="flex gap-2">
+            <button class="btn-primary" onclick="saveSession('bot1')">💾 حفظ الجلسة</button>
+            <button class="btn-danger" onclick="deleteSession('bot1')">🗑️ حذف</button>
+          </div>
+        </div>
+        <!-- Bot 2 -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-white text-lg">🤖 البوت الثاني</h3>
+            <span id="bot2-badge" class="badge badge-gray">غير مفعّل</span>
+          </div>
+          <div id="bot2-info" class="text-sm text-slate-400 mb-4"></div>
+          <textarea id="bot2-appstate" class="inp textarea mb-3" placeholder='ألصق كود AppState هنا (JSON) ...'></textarea>
+          <input id="bot2-note" class="inp mb-3" placeholder="ملاحظة (اختياري) — مثلاً: الحساب الاحتياطي"/>
+          <div class="flex gap-2">
+            <button class="btn-primary" onclick="saveSession('bot2')">💾 حفظ الجلسة</button>
+            <button class="btn-danger" onclick="deleteSession('bot2')">🗑️ حذف</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-5 mt-6">
+        <h3 class="font-semibold text-white mb-3">ℹ️ كيفية الحصول على AppState</h3>
+        <ol class="text-sm text-slate-400 space-y-2 list-decimal list-inside">
+          <li>ثبّت إضافة <strong class="text-slate-200">c3c-ufc-utility</strong> في متصفح Chrome</li>
+          <li>سجّل دخولك على facebook.com من المتصفح</li>
+          <li>افتح الإضافة واضغط "Copy AppState"</li>
+          <li>الصق المحتوى في الخانة أعلاه واضغط "حفظ الجلسة"</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Groups Tab -->
+    <div id="tab-groups" class="tab-content">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-white">إدارة المجموعات</h1>
+        <button class="btn-ghost text-sm" onclick="loadGroups()">🔄 تحديث</button>
+      </div>
+
+      <div class="card p-4 mb-4">
+        <input id="groups-search" class="inp" placeholder="🔍 بحث باسم المجموعة أو ID ..."/>
+      </div>
+
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead style="background:rgba(255,255,255,.04)">
+            <tr>
+              <th class="text-right p-4 text-slate-400 font-medium">المجموعة</th>
+              <th class="text-right p-4 text-slate-400 font-medium">البوت</th>
+              <th class="text-right p-4 text-slate-400 font-medium">الأعضاء</th>
+              <th class="text-center p-4 text-slate-400 font-medium">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="groups-tbody">
+            <tr><td colspan="4" class="p-6 text-center text-slate-500">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Broadcast Tab -->
+    <div id="tab-broadcast" class="tab-content">
+      <h1 class="text-2xl font-bold text-white mb-6">📢 إشعار المطور</h1>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card p-6">
+          <h3 class="font-semibold text-white mb-4">محتوى الرسالة</h3>
+          <textarea id="broadcast-msg" class="inp textarea mb-4" placeholder="اكتب رسالتك هنا...&#10;&#10;ستُرسَل إلى المجموعات المختارة مباشرة."></textarea>
+          <div class="text-xs text-slate-500 mb-4">المجموعات المختارة: <span id="selected-count" class="text-green-400 font-bold">0</span></div>
+          <button class="btn-primary w-full" onclick="sendBroadcast()">📤 إرسال الآن</button>
+        </div>
+
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-semibold text-white">اختيار المجموعات</h3>
+            <div class="flex gap-2">
+              <button class="btn-ghost text-xs py-1 px-3" onclick="selectAllGroups()">الكل</button>
+              <button class="btn-ghost text-xs py-1 px-3" onclick="deselectAllGroups()">إلغاء الكل</button>
+            </div>
+          </div>
+          <div id="broadcast-groups" class="space-y-2 max-h-80 overflow-y-auto">
+            <div class="text-slate-500 text-sm">جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commands Tab -->
+    <div id="tab-commands" class="tab-content">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-white">⚙️ إدارة الأوامر</h1>
+        <button class="btn-ghost text-sm" onclick="loadCommands()">🔄 تحديث</button>
+      </div>
+      <div class="card p-4 mb-4">
+        <input id="cmd-search" class="inp" placeholder="🔍 بحث باسم الأمر ..."/>
+      </div>
+      <div class="card overflow-hidden">
+        <table class="w-full text-sm">
+          <thead style="background:rgba(255,255,255,.04)">
+            <tr>
+              <th class="text-right p-4 text-slate-400 font-medium">الأمر</th>
+              <th class="text-right p-4 text-slate-400 font-medium">الفئة</th>
+              <th class="text-right p-4 text-slate-400 font-medium">الصلاحية</th>
+              <th class="text-center p-4 text-slate-400 font-medium">التفعيل</th>
+            </tr>
+          </thead>
+          <tbody id="cmd-tbody">
+            <tr><td colspan="4" class="p-6 text-center text-slate-500">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Render Tab -->
+    <div id="tab-render" class="tab-content">
+      <h1 class="text-2xl font-bold text-white mb-6">☁️ ربط Render</h1>
+
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-white mb-4">بيانات الاتصال</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">Render API Key</label>
+            <input id="render-key" type="password" class="inp" placeholder="rnd_xxxxxxxxxxxx"/>
+          </div>
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">Service ID</label>
+            <input id="render-svc" class="inp" placeholder="srv-xxxxxxxxxxxx"/>
+          </div>
+          <button class="btn-ghost" onclick="fetchRenderEnvs()">🔍 جلب المتغيرات الحالية</button>
+        </div>
+      </div>
+
+      <div class="card p-6 mb-6" id="render-envs-section" style="display:none">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-white">متغيرات البيئة الحالية</h3>
+          <button class="btn-primary text-sm" onclick="syncAppstateToRender()">☁️ رفع AppState</button>
+        </div>
+        <div id="render-envs-list" class="space-y-2 font-mono text-xs text-slate-300 max-h-60 overflow-y-auto"></div>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="font-semibold text-white mb-3">كيفية الحصول على بيانات Render</h3>
+        <ol class="text-sm text-slate-400 space-y-2 list-decimal list-inside">
+          <li>اذهب إلى <span class="text-green-400">dashboard.render.com → Account Settings → API Keys</span></li>
+          <li>أنشئ مفتاح جديد وانسخه هنا</li>
+          <li>الـ Service ID موجود في URL صفحة الخدمة</li>
+          <li>اضغط "رفع AppState" لتحديث متغير APPSTATE_BOT1 مباشرة على Render</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Config Tab -->
+    <div id="tab-config" class="tab-content">
+      <h1 class="text-2xl font-bold text-white mb-6">🛠️ إعدادات البوت</h1>
+
+      <div class="card p-6 mb-6">
+        <h3 class="font-semibold text-white mb-4">الإعدادات الأساسية</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">اسم البوت</label>
+            <input id="cfg-botname" class="inp" placeholder="Shadow Garden Bot"/>
+          </div>
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">البادئة (Prefix)</label>
+            <input id="cfg-prefix" class="inp" placeholder="."/>
+          </div>
+        </div>
+        <button class="btn-primary mt-4" onclick="saveConfig()">💾 حفظ الإعدادات</button>
+      </div>
+
+      <div class="card p-6">
+        <h3 class="font-semibold text-white mb-4">إدارة الأدوار (IDs)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">المطورون (Developers)</label>
+            <textarea id="cfg-devs" class="inp textarea" style="min-height:80px" placeholder="ID واحد في كل سطر"></textarea>
+          </div>
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">المشرفون (Admins)</label>
+            <textarea id="cfg-admins" class="inp textarea" style="min-height:80px" placeholder="ID واحد في كل سطر"></textarea>
+          </div>
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">المودراتور (Moderators)</label>
+            <textarea id="cfg-mods" class="inp textarea" style="min-height:80px" placeholder="ID واحد في كل سطر"></textarea>
+          </div>
+          <div>
+            <label class="text-sm text-slate-400 mb-1 block">VIPs</label>
+            <textarea id="cfg-vips" class="inp textarea" style="min-height:80px" placeholder="ID واحد في كل سطر"></textarea>
+          </div>
+        </div>
+        <button class="btn-primary mt-4" onclick="saveRoles()">💾 حفظ الأدوار</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const API = '';
+let allGroups = [];
+let allCommands = [];
+
+async function api(path, opts = {}) {
+  const r = await fetch(API + '/api' + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  return r.json();
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'groups') loadGroups();
+  if (name === 'commands') loadCommands();
+  if (name === 'broadcast') { loadGroups(); loadBroadcastGroups(); }
+  if (name === 'sessions') loadSessions();
+  if (name === 'config') loadConfig();
+}
+
+function fmtUptime(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return `${h}س ${m}د`;
+}
+
+async function loadStatus() {
+  try {
+    const d = await api('/status');
+    document.getElementById('sidebar-botname').textContent = d.botName || 'Bot';
+    document.getElementById('uptime-badge').textContent = fmtUptime(d.uptime || 0);
+    document.getElementById('ov-botname').textContent = d.botName || '...';
+    document.getElementById('ov-prefix').textContent = d.prefix || '/';
+    document.getElementById('ov-uptime').textContent = fmtUptime(d.uptime || 0);
+    document.getElementById('ov-disabled').textContent = d.disabledGroups + ' مجموعة';
+
+    const b1 = d.sessions?.bot1?.active;
+    const b2 = d.sessions?.bot2?.active;
+    document.getElementById('stat-bot1').innerHTML = b1 ? '<span class="text-green-400">✅ نشط</span>' : '<span class="text-red-400">⛔ غير نشط</span>';
+    document.getElementById('stat-bot2').innerHTML = b2 ? '<span class="text-green-400">✅ نشط</span>' : '<span class="text-red-400">⛔ غير نشط</span>';
+    document.getElementById('stat-groups').textContent = d.totalGroups;
+  } catch(e) {}
+
+  try {
+    const s = await api('/stats');
+    document.getElementById('stat-cmds').textContent = `${s.commands.enabled}/${s.commands.total}`;
+    document.getElementById('ov-roles').innerHTML = `
+      <div class="flex justify-between"><span class="text-slate-400">المطورون</span><span class="text-white">${s.roles.developers}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">المشرفون</span><span class="text-white">${s.roles.admins}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">المودراتور</span><span class="text-white">${s.roles.moderators}</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">VIPs</span><span class="text-white">${s.roles.vips}</span></div>
+    `;
+  } catch(e) {}
+}
+
+async function loadSessions() {
+  try {
+    const d = await api('/sessions');
+    for (const id of ['bot1','bot2']) {
+      const s = d[id];
+      const badge = document.getElementById(id + '-badge');
+      const info = document.getElementById(id + '-info');
+      if (s.active) {
+        badge.textContent = '✅ نشط';
+        badge.className = 'badge badge-green';
+        info.textContent = `آخر تحديث: ${s.updatedAt ? new Date(s.updatedAt).toLocaleString('ar') : '—'} • الحجم: ${(s.sizeBytes/1024).toFixed(1)} KB${s.note ? ' • ' + s.note : ''}`;
+      } else {
+        badge.textContent = 'غير نشط';
+        badge.className = 'badge badge-red';
+        info.textContent = 'لا توجد جلسة محفوظة';
+      }
+    }
+  } catch(e) {}
+}
+
+async function saveSession(botId) {
+  const raw = document.getElementById(botId + '-appstate').value.trim();
+  const note = document.getElementById(botId + '-note').value.trim();
+  if (!raw) return toast('ألصق كود AppState أولاً', 'error');
+  try {
+    JSON.parse(raw);
+  } catch { return toast('AppState غير صالح — تأكد من صيغة JSON', 'error'); }
+  const d = await api('/sessions/' + botId, { method: 'POST', body: { appstate: raw, note } });
+  if (d.success) { toast(d.message); loadSessions(); document.getElementById(botId + '-appstate').value = ''; }
+  else toast(d.error || 'خطأ', 'error');
+}
+
+async function deleteSession(botId) {
+  if (!confirm('هل أنت متأكد من حذف الجلسة؟')) return;
+  const d = await api('/sessions/' + botId, { method: 'DELETE' });
+  if (d.success) { toast(d.message); loadSessions(); }
+  else toast(d.error || 'خطأ', 'error');
+}
+
+async function loadGroups() {
+  try {
+    allGroups = await api('/groups');
+    renderGroups();
+    document.getElementById('groups-search').addEventListener('input', renderGroups);
+  } catch(e) {}
+}
+
+function renderGroups() {
+  const q = document.getElementById('groups-search')?.value?.toLowerCase() || '';
+  const filtered = allGroups.filter(g =>
+    g.name.toLowerCase().includes(q) || g.threadID.includes(q)
+  );
+  const tbody = document.getElementById('groups-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-slate-500">لا توجد مجموعات</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(g => `
+    <tr class="border-t border-white/5 hover:bg-white/2">
+      <td class="p-4">
+        <div class="font-medium text-white text-sm">${esc(g.name)}</div>
+        <div class="text-xs text-slate-500 font-mono">${g.threadID}</div>
+      </td>
+      <td class="p-4"><span class="badge badge-gray">${g.botId === 'bot2' ? 'البوت 2' : 'البوت 1'}</span></td>
+      <td class="p-4 text-slate-400 text-sm">${g.participantCount || '—'}</td>
+      <td class="p-4 text-center">
+        <label class="toggle">
+          <input type="checkbox" ${g.enabled ? 'checked' : ''} onchange="toggleGroup('${g.threadID}', this.checked)"/>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleGroup(threadID, enabled) {
+  const d = await api('/groups/toggle', { method: 'POST', body: { threadID, enabled } });
+  if (d.success) {
+    toast(d.message);
+    const g = allGroups.find(x => x.threadID === threadID);
+    if (g) g.enabled = enabled;
+  } else toast(d.error || 'خطأ', 'error');
+}
+
+async function loadBroadcastGroups() {
+  const container = document.getElementById('broadcast-groups');
+  if (!allGroups.length) {
+    try { allGroups = await api('/groups'); } catch(e) {}
+  }
+  if (!allGroups.length) {
+    container.innerHTML = '<div class="text-slate-500 text-sm">لا توجد مجموعات</div>';
+    return;
+  }
+  container.innerHTML = allGroups.map(g => `
+    <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer">
+      <input type="checkbox" class="broadcast-check w-4 h-4 accent-green-500" value="${g.threadID}" onchange="updateSelectedCount()"/>
+      <span class="text-sm text-slate-300">${esc(g.name)}</span>
+      <span class="badge badge-gray text-xs mr-auto">${g.botId === 'bot2' ? 'بوت 2' : 'بوت 1'}</span>
+    </label>
+  `).join('');
+}
+
+function updateSelectedCount() {
+  const n = document.querySelectorAll('.broadcast-check:checked').length;
+  document.getElementById('selected-count').textContent = n;
+}
+
+function selectAllGroups() {
+  document.querySelectorAll('.broadcast-check').forEach(c => c.checked = true);
+  updateSelectedCount();
+}
+
+function deselectAllGroups() {
+  document.querySelectorAll('.broadcast-check').forEach(c => c.checked = false);
+  updateSelectedCount();
+}
+
+async function sendBroadcast() {
+  const msg = document.getElementById('broadcast-msg').value.trim();
+  const checks = [...document.querySelectorAll('.broadcast-check:checked')];
+  const threadIDs = checks.map(c => c.value);
+  if (!msg) return toast('اكتب رسالة أولاً', 'error');
+  if (!threadIDs.length) return toast('اختر مجموعة واحدة على الأقل', 'error');
+  const d = await api('/broadcast', { method: 'POST', body: { message: msg, threadIDs } });
+  if (d.success) {
+    toast(d.message);
+    document.getElementById('broadcast-msg').value = '';
+    deselectAllGroups();
+  } else toast(d.error || 'خطأ', 'error');
+}
+
+async function loadCommands() {
+  try {
+    allCommands = await api('/commands');
+    renderCommands();
+    document.getElementById('cmd-search').addEventListener('input', renderCommands);
+  } catch(e) {}
+}
+
+function renderCommands() {
+  const q = document.getElementById('cmd-search')?.value?.toLowerCase() || '';
+  const filtered = allCommands.filter(c => c.name.toLowerCase().includes(q));
+  const roleLabel = { 0:'الجميع', 1:'مشرف', 2:'مودراتور', 3:'VIP', 4:'مطور' };
+  const tbody = document.getElementById('cmd-tbody');
+  tbody.innerHTML = filtered.map(c => `
+    <tr class="border-t border-white/5 hover:bg-white/2">
+      <td class="p-4">
+        <div class="font-mono text-green-400 font-medium text-sm">${esc(c.name)}</div>
+        ${c.aliases?.length ? `<div class="text-xs text-slate-500">${c.aliases.join(', ')}</div>` : ''}
+      </td>
+      <td class="p-4 text-slate-400 text-sm">${esc(c.category)}</td>
+      <td class="p-4"><span class="badge badge-gray">${roleLabel[c.role] || c.role}</span></td>
+      <td class="p-4 text-center">
+        <label class="toggle">
+          <input type="checkbox" ${c.enabled ? 'checked' : ''} onchange="toggleCmd('${c.name}', this.checked)"/>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function toggleCmd(name, enabled) {
+  const d = await api('/commands/' + name + '/toggle', { method: 'PATCH', body: { enabled } });
+  if (d.success) {
+    toast(d.message);
+    const c = allCommands.find(x => x.name === name);
+    if (c) c.enabled = enabled;
+  } else toast(d.error || 'خطأ', 'error');
+}
+
+async function fetchRenderEnvs() {
+  const key = document.getElementById('render-key').value.trim();
+  const svc = document.getElementById('render-svc').value.trim();
+  if (!key || !svc) return toast('أدخل API Key و Service ID', 'error');
+  toast('جاري الجلب...');
+  const d = await api(`/render/envs?renderKey=${encodeURIComponent(key)}&serviceId=${encodeURIComponent(svc)}`);
+  if (d.error) return toast(d.error, 'error');
+  const section = document.getElementById('render-envs-section');
+  section.style.display = 'block';
+  const list = document.getElementById('render-envs-list');
+  const envs = Array.isArray(d) ? d : [];
+  list.innerHTML = envs.map(e => `
+    <div class="flex justify-between py-1 border-b border-white/5">
+      <span class="text-slate-400">${esc(e.key)}</span>
+      <span class="text-slate-300 truncate max-w-xs">${e.value ? esc(e.value.substring(0,40)) + (e.value.length > 40 ? '...' : '') : '—'}</span>
+    </div>
+  `).join('') || '<div class="text-slate-500">لا توجد متغيرات</div>';
+  toast('تم جلب المتغيرات');
+}
+
+async function syncAppstateToRender() {
+  const key = document.getElementById('render-key').value.trim();
+  const svc = document.getElementById('render-svc').value.trim();
+  if (!key || !svc) return toast('أدخل API Key و Service ID أولاً', 'error');
+
+  const appstate1 = document.getElementById('bot1-appstate')?.value?.trim();
+  const appstate2 = document.getElementById('bot2-appstate')?.value?.trim();
+  if (!appstate1 && !appstate2) return toast('افتح تبويب الجلسات وألصق AppState أولاً', 'error');
+
+  const envVars = [];
+  if (appstate1) envVars.push({ key: 'APPSTATE_BOT1', value: appstate1 });
+  if (appstate2) envVars.push({ key: 'APPSTATE_BOT2', value: appstate2 });
+
+  const d = await api('/render/sync', { method: 'POST', body: { renderKey: key, serviceId: svc, envVars } });
+  if (d.success) toast(d.message);
+  else toast(d.error || 'خطأ', 'error');
+}
+
+async function loadConfig() {
+  try {
+    const d = await api('/config');
+    document.getElementById('cfg-botname').value = d.botName || '';
+    document.getElementById('cfg-prefix').value = (d.prefix || ['/'])[0];
+    document.getElementById('cfg-devs').value = (d.developers || []).join('\n');
+    document.getElementById('cfg-admins').value = (d.admins || []).join('\n');
+    document.getElementById('cfg-mods').value = (d.moderators || []).join('\n');
+    document.getElementById('cfg-vips').value = (d.vips || []).join('\n');
+  } catch(e) {}
+}
+
+async function saveConfig() {
+  const botName = document.getElementById('cfg-botname').value.trim();
+  const prefix = document.getElementById('cfg-prefix').value.trim() || '/';
+  const d = await api('/config', { method: 'PATCH', body: { botName, prefix: [prefix] } });
+  if (d.success) toast('✅ تم حفظ الإعدادات');
+  else toast(d.error || 'خطأ', 'error');
+}
+
+async function saveRoles() {
+  const parse = id => document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const d = await api('/config', { method: 'PATCH', body: {
+    developers: parse('cfg-devs'),
+    admins: parse('cfg-admins'),
+    moderators: parse('cfg-mods'),
+    vips: parse('cfg-vips'),
+  }});
+  if (d.success) toast('✅ تم حفظ الأدوار');
+  else toast(d.error || 'خطأ', 'error');
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadStatus();
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
