@@ -21,22 +21,13 @@ const CATEGORY_MERGE = {
 // 🏷️ أسماء بديلة تظهر بجانب الأمر في القائمة
 const ALIAS_HINTS = {
   help: "مساعدة",
-  clearcache: "كاش",
-  reload: "إعادة_تحميل",
   kick: "طرد",
-  filteruser: "فلتر",
   adduser: "اضافة",
-  antiout: "منع_الخروج",
-  prefix: "بادئة",
-  ytdl: "تنزيل",
   sing: "mp3",
-  autodl: "تحميل_تلقائي",
   img: "صورة",
-  ttk: "تيكتوك",
   tr: "ترجمة",
   uid: "ايدي",
   gid: "معرف_المجموعة",
-  notes: "ملاحظة",
   gemini: "بوت",
   groq: "ai2"
 };
