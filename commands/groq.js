@@ -19,6 +19,7 @@ const groqClient = axios.create({
 const setReaction = (api, reaction, messageID, threadID) => {
   try {
     if (!messageID || !threadID) return;
+    if (!messageID || !threadID || !reaction) return;
     api.setMessageReaction(String(reaction), String(messageID), () => {}, String(threadID));
   } catch (e) {}
 };
