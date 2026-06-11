@@ -206,6 +206,7 @@ function cacheGroups() {
 const handleMessage = async (api, event) => {
   const { threadID, senderID, body, messageReply, messageID } = event;
   if (!body?.trim()) return;
+  if (!messageID || !threadID || !senderID) return; // ← guard شامل
   if (isGroupDisabled(threadID)) return;
 
   const messageText = body.trim();
