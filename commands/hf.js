@@ -32,8 +32,11 @@ async function clearSession(tid) {
 async function callHF(messages, model = "default") {
   if (!HF_PROXY_URL) throw new Error("HF_PROXY_URL غير موجود في متغيرات Render");
 
+  const url = `${HF_PROXY_URL.replace(/\/+$/, "")}/chat`;
+  console.log(`[HF] POST → ${url}`); // debug مؤقت
+
   const { data } = await axios.post(
-    `${HF_PROXY_URL.replace(/\/$/, "")}/chat`,
+    url,
     { messages, model, max_tokens: 512, temperature: 0.7 },
     {
       timeout: TIMEOUT,
@@ -48,7 +51,11 @@ async function callHF(messages, model = "default") {
 
 // ─── reaction helper ──────────────────────────────────────────
 const react = (api, emoji, mid, tid) => {
-  try { api.setMessageReaction(String(emoji), String(mid), () => {}, String(tid)); } catch (_) {}
+  try {
+    if (!emoji || !mid || !tid) return;
+    if (String(mid) === "undefined" || String(tid) === "undefined") return;
+    api.setMessageReaction(String(emoji), String(mid), () => {}, String(tid));
+  } catch (_) {}
 };
 
 // ─── handler مشترك ───────────────────────────────────────────
@@ -116,6 +123,8 @@ async function handle(api, event, args, model) {
       msg += "⏱️ انتهت المهلة — النموذج قد يكون نائماً، حاول مجدداً";
     else if (err.response?.status === 401)
       msg += "🔑 PROXY_SECRET خاطئ";
+    else if (err.response?.status === 404)
+      msg += `🔍 404 — URL خاطئ\nالمستخدم: ${HF_PROXY_URL || "غير موجود"}\nتحقق من HF_PROXY_URL في Render`;
     else if (err.response?.status === 503)
       msg += "😴 النموذج نائم على HF — أعد المحاولة بعد 30 ثانية";
     else

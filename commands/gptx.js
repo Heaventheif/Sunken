@@ -13,8 +13,8 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي اسمك "Sunken". أجب بإي
 // 🛡️ دالة تفاعل حصينة
 const setReaction = (api, reaction, messageID, threadID) => {
   try {
-    if (!messageID || !threadID) return;
-    if (!messageID || !threadID || !reaction) return;
+    if (!reaction || !messageID || !threadID) return;
+    if (String(messageID) === "undefined" || String(threadID) === "undefined") return;
     api.setMessageReaction(String(reaction), String(messageID), () => {}, String(threadID));
   } catch (e) {}
 };
