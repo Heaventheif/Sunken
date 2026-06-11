@@ -9,7 +9,7 @@ const fs    = require("fs-extra");
 const path  = require("path");
 
 // ─── Config ───────────────────────────────────────────────────────────────────
-const HF_URL    = process.env.HF_SPACE_URL;   // مثال: https://user-sunken-ai.hf.space
+const HF_URL    = process.env.HF_PROXY_URL;   // مثال: https://user-sunken-ai.hf.space
 const HF_SECRET = process.env.HF_SECRET_KEY || "sunken";
 const sessionsDir = path.join(__dirname, "..", "cache", "hfai_sessions");
 fs.ensureDirSync(sessionsDir);
@@ -47,7 +47,7 @@ const react = (api, emoji, msgID, tidID) => {
 
 // ─── Call HF Space ────────────────────────────────────────────────────────────
 async function callHF(prompt, context = [], model = "qwen") {
-  if (!HF_URL) throw new Error("HF_SPACE_URL غير موجود في متغيرات البيئة");
+  if (!HF_URL) throw new Error("HF_PROXY_URL غير موجود في متغيرات البيئة");
 
   const { data } = await axios.post(
     `${HF_URL.replace(/\/$/, "")}/chat`,
@@ -126,8 +126,8 @@ async function handle(api, event, prompt, useThreadSession = false) {
     if (err.retry)                msg += `⏳ النموذج يُحمَّل، انتظر ${err.wait || 20} ثانية وأعد المحاولة`;
     else if (err.code === "ECONNABORTED" || err.message.includes("timeout"))
                                   msg += "⏱️ انتهت مهلة الاتصال مع HF Space";
-    else if (err.message.includes("HF_SPACE_URL"))
-                                  msg += "⚙️ HF_SPACE_URL غير مضبوط في Render";
+    else if (err.message.includes("HF_PROXY_URL"))
+                                  msg += "⚙️ HF_PROXY_URL غير مضبوط في Render";
     else                          msg += err.message?.substring(0, 120) || "فشل الاتصال";
 
     api.sendMessage(msg, threadID, null, messageID);
