@@ -49,19 +49,25 @@ const react = (api, emoji, msgID, tidID) => {
 async function callHF(prompt, context = [], model = "qwen") {
   if (!HF_URL) throw new Error("HF_PROXY_URL غير موجود في متغيرات البيئة");
 
+  // بناء messages بالصيغة التي يتوقعها app.py
+  const messages = [
+    ...context,
+    { role: "user", content: prompt }
+  ];
+
   const { data } = await axios.post(
-    `${HF_URL.replace(/\/$/, "")}/chat`,
-    { prompt, context, model, secret: HF_SECRET },
+    `${HF_URL.replace(/\/+$/, "")}/chat`,
+    { messages, model, max_tokens: 400, temperature: 0.7 },
     {
-      headers: { "Content-Type": "application/json", "x-secret-key": HF_SECRET },
-      timeout: 35_000,
+      headers: {
+        "Content-Type": "application/json",
+        "x-proxy-secret": HF_SECRET,
+      },
+      timeout: 60_000,
     }
   );
 
-  if (!data?.ok) {
-    if (data?.retry) throw Object.assign(new Error(data.error), { retry: true, wait: data.wait || 20 });
-    throw new Error(data?.error || "استجابة غير متوقعة");
-  }
+  if (!data?.reply) throw new Error("استجابة فارغة من الخادم");
   return data.reply;
 }
 
