@@ -1,6 +1,24 @@
 /* jshint esversion: 11 */
 "use strict";
 
+// ─── Global Error Handlers ────────────────────────────────────
+process.on("unhandledRejection", (reason) => {
+  const msg = String(reason?.message || reason || "");
+  // أخطاء داخلية من fca-unofficial — لا تؤثر على عمل البوت
+  if (msg.includes("Missing required parameters") ||
+      msg.includes("setMessageReaction") ||
+      msg.includes("mqtt") ||
+      msg.includes("MQTT")) return;
+  console.error("[UnhandledRejection]", msg.substring(0, 200));
+});
+
+process.on("uncaughtException", (err) => {
+  const msg = String(err?.message || err || "");
+  if (msg.includes("Missing required parameters") ||
+      msg.includes("setMessageReaction")) return;
+  console.error("[UncaughtException]", msg.substring(0, 200));
+});
+
 // ─── Globals الضرورية فقط ────────────────────────────────────
 global.threadState      = { active: new Map(), approved: new Map(), pending: new Map() };
 global.client           = { reactionListener: {}, globalData: new Map() };
