@@ -6,8 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node start.js",
-    "bot-only": "node --no-warnings index.js",
-    "postinstall": "npm rebuild sqlite3 --update-binary || true"
+    "bot-only": "node --no-warnings index.js"
   },
   "dependencies": {
     "@anbuinfosec/fca-unofficial": "latest",
